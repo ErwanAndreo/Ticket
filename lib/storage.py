@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,12 @@ STORAGE_KEYS = {
     "DIENSTKLEIDUNG": PREFIX + "dienstkleidung",
     "ANTRAEGE": PREFIX + "antraege",
     "TERMINE": PREFIX + "termine",
+    "TICKETS": PREFIX + "tickets",
+    "VERANTWORTLICHE": PREFIX + "verantwortliche",
+    "WACHBUCH": PREFIX + "wachbuch",
+    "FAHRZEUGE": PREFIX + "fahrzeuge",
+    "PROFIL": PREFIX + "profil",
+    "DOKUMENTE": PREFIX + "dokumente",
 }
 
 _APP_DIR = Path(__file__).resolve().parent.parent
@@ -54,3 +61,8 @@ def set_item(key: str, value: Any) -> None:
     data = _read_all()
     data[key] = value
     _write_all(data)
+
+
+def next_id() -> str:
+    # Aligns with the Date.now()-style IDs used in Next.js pages.
+    return str(int(time.time() * 1000))
