@@ -50,12 +50,35 @@ NAV_ICONS = {
     "Inventar": "📦",
     "Dokumente": "📁",
     "Johanni": "🌟",
-    "Infos": "ℹ",
     "IT": "💻",
     "Auftraege": "🧾",
     "Einstellungen": "⚙️",
     "Profil": "🙍",
     "Abmelden": "↩",
+}
+
+ROUTE_LABELS = {
+    "Dashboard": "Dashboard",
+    "Termine": "Termine",
+    "Personalakten": "Personalakten",
+    "Fahrzeuge": "Fahrzeuge",
+    "Ticketsystem": "Ticketsystem",
+    "Helferstunden": "Helferstunden",
+    "Wachbuch": "Wachbuch",
+    "Antraege": "Anträge",
+    "Dienstkleidung": "Dienstkleidung",
+    "Aufgaben": "Aufgaben",
+    "Pinnwand": "Pinnwand",
+    "Mitglieder": "Mitglieder",
+    "Kalender": "Kalender",
+    "Ausbildung": "Ausbildung",
+    "Haussteuerung": "Haussteuerung",
+    "Inventar": "Inventar",
+    "Dokumente": "Dokumente",
+    "Johanni": "Johanni",
+    "Auftraege": "Aufträge",
+    "Verantwortliche": "Verantwortliche",
+    "IT": "IT",
 }
 
 
@@ -148,6 +171,7 @@ def inject_vmoritz_theme() -> None:
 
 ROUTES = [
     "Dashboard",
+    "Johanni",
     "Termine",
     "Personalakten",
     "Fahrzeuge",
@@ -164,8 +188,6 @@ ROUTES = [
     "Haussteuerung",
     "Inventar",
     "Dokumente",
-    "Johanni",
-    "Infos",
     "Auftraege",
     "Verantwortliche",
     "IT",
@@ -192,7 +214,7 @@ HREF_TO_ROUTE = {
     "/inventar": "Inventar",
     "/dokumente": "Dokumente",
     "/johanni": "Johanni",
-    "/infos": "Infos",
+    "/infos": "Verantwortliche",
     "/it": "IT",
     "/auftraege": "Auftraege",
     "/einstellungen": "Einstellungen",
@@ -268,7 +290,7 @@ def render_shortcut(label: str, href: str, key: str) -> None:
 def render_dashboard() -> None:
     user = get_current_user()
     st.title("Hallo " + user.get("displayName", "User"))
-    st.caption("Willkommen im Ticket V-Beide. Waehle einen Bereich.")
+    st.caption("Willkommen im Ticket V-Beide. Wähle einen Bereich.")
 
     custom_shortcuts = get_item(STORAGE_KEYS["SHORTCUTS"], [])
     if not custom_shortcuts:
@@ -293,7 +315,7 @@ def render_dashboard() -> None:
                 st.caption(module["desc"])
                 render_shortcut("Oeffnen", module["href"], f"module_{idx}")
 
-    st.markdown('<div class="vm-section-title">Naechste Termine</div>', unsafe_allow_html=True)
+    st.markdown('<div class="vm-section-title">Nächste Termine</div>', unsafe_allow_html=True)
     termine = get_item(STORAGE_KEYS["TERMINE"], [])
     if not termine:
         termine = MOCK_TERMINE
@@ -355,26 +377,33 @@ def build_search_rows(query: str) -> list[dict[str, str]]:
     for i in INFOS_ANSPRECHPARTNER:
         text = f"{i['kategorie']} {i['name']} {i['email']}".lower()
         if q in text:
-            rows.append({"label": i["name"], "meta": i["kategorie"], "route": "Infos", "id": ""})
+            rows.append({"label": i["name"], "meta": i["kategorie"], "route": "Verantwortliche", "id": ""})
 
     return rows[:12]
 
 
 def render_global_search() -> None:
-    current_query = st.session_state.get("global_search_query", "")
-    left, center, right = st.columns([1, 2, 1])
+    if "global_search_input" not in st.session_state:
+        st.session_state["global_search_input"] = st.session_state.get("global_search_query", "")
+
+    _, center, right = st.columns([1, 8, 1])
     with center:
         with st.form("global_search_form"):
-            q = st.text_input(
-                "Suche in der App",
-                value=current_query,
-                placeholder="Termine, Antraege, Mitglieder, Infos ...",
-                label_visibility="collapsed",
-            )
-            submitted = st.form_submit_button("Suchen")
+            c_input, c_button = st.columns([6, 1])
+            with c_input:
+                q = st.text_input(
+                    "Suche in der App",
+                    key="global_search_input",
+                placeholder="Termine, Anträge, Mitglieder, Infos ...",
+                    label_visibility="collapsed",
+                )
+            with c_button:
+                submitted = st.form_submit_button("Suchen", use_container_width=True)
             if submitted:
                 st.session_state["global_search_query"] = q.strip()
                 st.rerun()
+    with right:
+        render_profile_menu()
 
     query = st.session_state.get("global_search_query", "").strip()
     if not query:
@@ -382,7 +411,7 @@ def render_global_search() -> None:
 
     results = build_search_rows(query)
     with st.container(border=True):
-        st.markdown(f"**Suchergebnisse fuer:** `{query}`")
+        st.markdown(f"**Suchergebnisse für:** `{query}`")
         if not results:
             st.caption("Keine Treffer.")
             return
@@ -429,17 +458,15 @@ def render_profile_menu() -> None:
         unsafe_allow_html=True,
     )
 
-    _, right = st.columns([20, 1])
-    with right:
-        with st.popover(initials):
-            st.write("**" + user.get("displayName", "User") + "**")
-            st.caption(user.get("email", ""))
-            if st.button("Profil", key="menu_profil", use_container_width=True):
-                goto("Profil")
-            if st.button("Einstellungen", key="menu_settings", use_container_width=True):
-                goto("Einstellungen")
-            if st.button("Abmelden", key="menu_logout", use_container_width=True):
-                goto("Abmelden")
+    with st.popover(initials):
+        st.write("**" + user.get("displayName", "User") + "**")
+        st.caption(user.get("email", ""))
+        if st.button("Profil", key="menu_profil", use_container_width=True):
+            goto("Profil")
+        if st.button("Einstellungen", key="menu_settings", use_container_width=True):
+            goto("Einstellungen")
+        if st.button("Abmelden", key="menu_logout", use_container_width=True):
+            goto("Abmelden")
 
 
 def render_termine() -> None:
@@ -488,7 +515,7 @@ def render_termine() -> None:
 
 
 def render_termin_detail() -> None:
-    st.title("Termin Detail")
+    st.title("Termin-Detail")
     selected_id = str(route_param("id", "") or "")
     termine = get_item(STORAGE_KEYS["TERMINE"], [])
     stored_match = next((t for t in termine if t.get("id") == selected_id), None)
@@ -557,8 +584,8 @@ def render_kalender() -> None:
 
 
 def render_antraege() -> None:
-    st.title("Antraege")
-    search = st.text_input("Antraege durchsuchen")
+    st.title("Anträge")
+    search = st.text_input("Anträge durchsuchen")
     kategorie = st.selectbox("Kategorie", ["Alle", "Schaden melden", "Urlaub", "Material", "Sonstiges"])
     stored = get_item(STORAGE_KEYS["ANTRAEGE"], [])
     all_antraege = [*stored, *MOCK_ANTRAEGE]
@@ -573,7 +600,7 @@ def render_antraege() -> None:
     if st.button("Schaden melden", key="to_schaden"):
         goto("Schaden melden")
     if not filtered:
-        st.info("Keine Antraege gefunden.")
+        st.info("Keine Anträge gefunden.")
         return
     for idx, a in enumerate(filtered):
         c1, c2 = st.columns([6, 1])
@@ -588,7 +615,7 @@ def render_antraege() -> None:
 
 
 def render_antrag_detail() -> None:
-    st.title("Antrag Detail")
+    st.title("Antrag-Detail")
     selected_id = str(route_param("id", "") or "")
     if selected_id in {a["id"] for a in MOCK_ANTRAEGE}:
         found = next(a for a in MOCK_ANTRAEGE if a["id"] == selected_id)
@@ -609,7 +636,7 @@ def render_antrag_detail() -> None:
     st.subheader(found.get("titel", "Antrag"))
     st.write(f"{found.get('kategorie', '')} - {found.get('status', '')} - {found.get('datum', '')}")
     st.write(found.get("beschreibung", "—"))
-    if st.button("Zurueck zu Antraege"):
+    if st.button("Zurück zu Anträgen"):
         goto("Antraege")
 
 
@@ -634,7 +661,7 @@ def render_schaden_melden() -> None:
         }
         set_item(STORAGE_KEYS["ANTRAEGE"], [neu, *stored])
         st.success("Meldung wurde abgeschickt.")
-        if st.button("Zu den Antraegen"):
+        if st.button("Zu den Anträgen"):
             goto("Antraege")
 
 
@@ -658,7 +685,7 @@ def render_aufgaben() -> None:
 
     with st.form("todo_add"):
         title = st.text_input("Neues Todo")
-        add = st.form_submit_button("Hinzufuegen")
+        add = st.form_submit_button("Hinzufügen")
     if add and title.strip():
         set_item(STORAGE_KEYS["AUFGABEN_TODOS"], [*todos, {"id": next_id(), "titel": title.strip(), "erledigt": False}])
         st.success("Todo hinzugefuegt.")
@@ -716,10 +743,10 @@ def render_dienstkleidung() -> None:
     st.title("Dienstkleidung")
     liste = ensure_list(STORAGE_KEYS["DIENSTKLEIDUNG"], MOCK_KLEIDUNG)
     for k in liste:
-        st.write(f"- {k.get('artikel')} | Groesse {k.get('groesse')} | {k.get('status')} | {k.get('datum')}")
+        st.write(f"- {k.get('artikel')} | Größe {k.get('groesse')} | {k.get('status')} | {k.get('datum')}")
     with st.form("kleidung_form"):
         artikel = st.selectbox("Artikel", ["T-Shirt", "Hose", "Jacke", "Schuhe"])
-        groesse = st.text_input("Groesse")
+        groesse = st.text_input("Größe")
         submit = st.form_submit_button("Anfrage senden")
     if submit:
         artikel_label = "T-Shirt blau" if artikel == "T-Shirt" else "Hose dunkelblau" if artikel == "Hose" else artikel
@@ -770,7 +797,7 @@ def render_einstellungen() -> None:
     with st.form("add_shortcut"):
         href = st.text_input("Link (z. B. /termine oder https://...)")
         label = st.text_input("Anzeigename")
-        add = st.form_submit_button("Hinzufuegen")
+        add = st.form_submit_button("Hinzufügen")
     if add and href.strip():
         norm_href = href.strip()
         if (not norm_href.startswith("/")) and (not norm_href.startswith("http")):
@@ -835,14 +862,27 @@ def render_tickets() -> None:
 
 
 def render_verantwortliche() -> None:
-    st.title("Verantwortlichen-Liste")
+    st.title("Verantwortliche")
+    st.caption("Ansprechpartner nach Bereich plus frei gepflegte Verantwortlichen-Liste.")
+
+    grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for item in INFOS_ANSPRECHPARTNER:
+        grouped[item["kategorie"]].append(item)
+    for k, values in grouped.items():
+        with st.container(border=True):
+            st.subheader(k)
+            for a in values:
+                st.write(f"- {a['name']} | {a['email']} | {a['telefon']}")
+
+    st.markdown("---")
+    st.subheader("Eigene Verantwortliche")
     liste = get_item(STORAGE_KEYS["VERANTWORTLICHE"], [])
     with st.form("verantwortliche_form"):
         thema = st.text_input("Referat / Thema")
         name = st.text_input("Name")
         email = st.text_input("E-Mail")
         tel = st.text_input("Tel")
-        add = st.form_submit_button("Hinzufuegen")
+        add = st.form_submit_button("Hinzufügen")
     if add and thema.strip() and name.strip():
         neu = {"id": next_id(), "thema": thema.strip(), "name": name.strip(), "email": email.strip(), "tel": tel.strip()}
         set_item(STORAGE_KEYS["VERANTWORTLICHE"], [*liste, neu])
@@ -919,7 +959,7 @@ def render_fahrzeuge() -> None:
 
 def render_personal() -> None:
     st.title("Personalakten")
-    tab = st.radio("Bereich", ["Allgemein", "Ausbildungen", "Fuehrerscheine"], horizontal=True)
+    tab = st.radio("Bereich", ["Allgemein", "Ausbildungen", "Führerscheine"], horizontal=True)
     profil = get_item(
         STORAGE_KEYS["PROFIL"],
         {"name": "", "wohnort": "", "notfallkontakt": "", "ausbildungen": "", "fuehrerscheine": ""},
@@ -941,8 +981,8 @@ def render_personal() -> None:
         for a in [x.strip() for x in aus.split(",") if x.strip()]:
             st.write("- " + a)
     else:
-        fs = st.text_input("Fuehrerscheine (Komma getrennt)", value=profil.get("fuehrerscheine", ""))
-        if st.button("Fuehrerscheine speichern"):
+        fs = st.text_input("Führerscheine (Komma getrennt)", value=profil.get("fuehrerscheine", ""))
+        if st.button("Führerscheine speichern"):
             profil["fuehrerscheine"] = fs
             set_item(STORAGE_KEYS["PROFIL"], profil)
             st.success("Gespeichert.")
@@ -1002,17 +1042,6 @@ def render_mitglieder() -> None:
         st.write(f"**{m['name']}** - {m['email']} - {m['bereich']}")
 
 
-def render_infos() -> None:
-    st.title("Infos")
-    grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
-    for item in INFOS_ANSPRECHPARTNER:
-        grouped[item["kategorie"]].append(item)
-    for k, values in grouped.items():
-        st.subheader(k)
-        for a in values:
-            st.write(f"- {a['name']} | {a['email']} | {a['telefon']}")
-
-
 def render_it() -> None:
     st.title("IT")
     st.write("Name: IT Support")
@@ -1040,8 +1069,8 @@ def render_haussteuerung() -> None:
 
 def render_auftraege() -> None:
     st.title("Laufende Auftraege")
-    st.write("Hier erscheinen laufende Auftraege (Antraege in Bearbeitung, zugewiesene Termine, etc.).")
-    st.write("- Keine laufenden Auftraege.")
+    st.write("Hier erscheinen laufende Aufträge (Anträge in Bearbeitung, zugewiesene Termine, etc.).")
+    st.write("- Keine laufenden Aufträge.")
 
 
 def render_abmelden() -> None:
@@ -1070,7 +1099,7 @@ def render_sidebar() -> None:
         for route in ROUTES:
             is_current = route == current
             icon = NAV_ICONS.get(route, "•")
-            label = f"{icon}  {route}"
+            label = f"{icon}  {ROUTE_LABELS.get(route, route)}"
             if st.button(
                 label,
                 key=f"nav_{route.replace(' ', '_')}",
@@ -1106,7 +1135,6 @@ ROUTE_RENDERERS = {
     "Inventar": render_inventar,
     "Dokumente": render_dokumente,
     "Johanni": render_johanni,
-    "Infos": render_infos,
     "IT": render_it,
     "Auftraege": render_auftraege,
     "Einstellungen": render_einstellungen,
@@ -1116,7 +1144,6 @@ ROUTE_RENDERERS = {
 
 inject_vmoritz_theme()
 render_sidebar()
-render_profile_menu()
 render_global_search()
 ROUTE_RENDERERS[st.session_state["route"]]()
 
