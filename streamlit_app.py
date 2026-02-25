@@ -27,19 +27,108 @@ from lib.storage import STORAGE_KEYS, get_item, next_id, set_item
 
 st.set_page_config(page_title="Ticket-Vbeide", page_icon="🎫", layout="wide")
 
+NAV_ICONS = {
+    "Dashboard": "⌂",
+    "Termine": "📅",
+    "Termin Detail": "📌",
+    "Personalakten": "👤",
+    "Fahrzeuge": "🚐",
+    "Ticketsystem": "🎫",
+    "Verantwortliche": "📋",
+    "Helferstunden": "⏱",
+    "Wachbuch": "📖",
+    "Antraege": "📝",
+    "Antrag Detail": "📄",
+    "Schaden melden": "🚨",
+    "Dienstkleidung": "👕",
+    "Aufgaben": "✓",
+    "Pinnwand": "📌",
+    "Mitglieder": "👥",
+    "Kalender": "🗓",
+    "Ausbildung": "🎓",
+    "Haussteuerung": "🏠",
+    "Inventar": "📦",
+    "Dokumente": "📁",
+    "Johanni": "🌟",
+    "Infos": "ℹ",
+    "IT": "💻",
+    "Auftraege": "🧾",
+    "Einstellungen": "⚙️",
+    "Profil": "🙍",
+    "Abmelden": "↩",
+}
+
+
+def inject_vmoritz_theme() -> None:
+    st.markdown(
+        """
+<style>
+    :root {
+        --vm-bg: #f8fafc;
+        --vm-fg: #0f172a;
+        --vm-primary: #0ea5e9;
+        --vm-muted: #64748b;
+        --vm-border: #cbd5e1;
+        --vm-card: #ffffff;
+        --vm-sidebar: #0f172a;
+        --vm-sidebar-fg: #e2e8f0;
+    }
+    .stApp {
+        background: var(--vm-bg);
+        color: var(--vm-fg);
+    }
+    [data-testid="stSidebar"] {
+        background: var(--vm-sidebar);
+        border-right: 1px solid #1e293b;
+    }
+    [data-testid="stSidebar"] * {
+        color: var(--vm-sidebar-fg) !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stButton"] > button {
+        border-radius: 10px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--vm-sidebar-fg) !important;
+        font-weight: 600;
+        text-align: left;
+        justify-content: flex-start;
+        padding: 0.5rem 0.75rem;
+    }
+    [data-testid="stSidebar"] [data-testid="stButton"] > button:hover {
+        background: rgba(255, 255, 255, 0.09);
+    }
+    [data-testid="stSidebar"] [data-testid="stButton"] > button[kind="primary"] {
+        background: var(--vm-primary);
+        color: #ffffff !important;
+    }
+    [data-testid="stButton"] > button {
+        border-radius: 10px;
+    }
+    div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
+        border: 1px solid var(--vm-border);
+        border-radius: 12px;
+        background: var(--vm-card);
+    }
+    .vm-section-title {
+        margin-top: 0.2rem;
+        margin-bottom: 0.7rem;
+        color: var(--vm-fg);
+        font-weight: 700;
+    }
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 ROUTES = [
     "Dashboard",
-    "Suche",
     "Termine",
-    "Termin Detail",
     "Personalakten",
     "Fahrzeuge",
     "Ticketsystem",
-    "Verantwortliche",
     "Helferstunden",
     "Wachbuch",
     "Antraege",
-    "Antrag Detail",
     "Schaden melden",
     "Dienstkleidung",
     "Aufgaben",
@@ -52,16 +141,13 @@ ROUTES = [
     "Dokumente",
     "Johanni",
     "Infos",
-    "IT",
     "Auftraege",
-    "Einstellungen",
-    "Profil",
-    "Abmelden",
+    "Verantwortliche",
+    "IT",
 ]
 
 HREF_TO_ROUTE = {
     "/": "Dashboard",
-    "/suche": "Suche",
     "/termine": "Termine",
     "/personal": "Personalakten",
     "/fahrzeuge": "Fahrzeuge",
@@ -157,36 +243,32 @@ def render_shortcut(label: str, href: str, key: str) -> None:
 def render_dashboard() -> None:
     user = get_current_user()
     st.title("Hallo " + user.get("displayName", "User"))
-    st.caption("Willkommen im Ticket V-Beide. Waehle einen Bereich oder nutze die Suche.")
-
-    with st.form("search_dashboard"):
-        q = st.text_input("Suche", placeholder="Suchen...")
-        submitted = st.form_submit_button("Suchen")
-        if submitted and q.strip():
-            goto("Suche", q=q.strip())
+    st.caption("Willkommen im Ticket V-Beide. Waehle einen Bereich.")
 
     custom_shortcuts = get_item(STORAGE_KEYS["SHORTCUTS"], [])
     if not custom_shortcuts:
         custom_shortcuts = DEFAULT_SHORTCUTS
 
-    st.subheader("Shortcuts")
+    st.markdown('<div class="vm-section-title">Shortcuts</div>', unsafe_allow_html=True)
     short_cols = st.columns(3)
     all_shortcuts = AUTO_SHORTCUTS + custom_shortcuts
     for idx, sc in enumerate(all_shortcuts):
         with short_cols[idx % 3]:
-            render_shortcut(sc.get("label", "Shortcut"), sc.get("href", "/"), f"shortcut_{idx}")
+            with st.container(border=True):
+                render_shortcut(sc.get("label", "Shortcut"), sc.get("href", "/"), f"shortcut_{idx}")
     if st.button("+ Eigene legen", key="open_settings_shortcuts"):
         goto("Einstellungen")
 
-    st.subheader("Bereiche")
+    st.markdown('<div class="vm-section-title">Bereiche</div>', unsafe_allow_html=True)
     cols = st.columns(3)
     for idx, module in enumerate(MODULES_GRID):
         with cols[idx % 3]:
-            st.markdown(f"**{module['icon']} {module['label']}**")
-            st.caption(module["desc"])
-            render_shortcut("Oeffnen", module["href"], f"module_{idx}")
+            with st.container(border=True):
+                st.markdown(f"### {module['icon']} {module['label']}")
+                st.caption(module["desc"])
+                render_shortcut("Oeffnen", module["href"], f"module_{idx}")
 
-    st.subheader("Naechste Termine")
+    st.markdown('<div class="vm-section-title">Naechste Termine</div>', unsafe_allow_html=True)
     termine = get_item(STORAGE_KEYS["TERMINE"], [])
     if not termine:
         termine = MOCK_TERMINE
@@ -195,21 +277,144 @@ def render_dashboard() -> None:
         date_value = t.get("datum", t.get("date", ""))
         time_value = t.get("uhrzeit", t.get("time", ""))
         termin_id = t.get("id", "")
-        c1, c2 = st.columns([5, 1])
-        with c1:
-            st.write(f"**{title}** - {date_value} {time_value}")
-        with c2:
-            if st.button("Details", key=f"dash_t_detail_{idx}"):
-                goto("Termin Detail", id=termin_id)
+        with st.container(border=True):
+            c1, c2 = st.columns([5, 1])
+            with c1:
+                st.write(f"**{title}** - {date_value} {time_value}")
+            with c2:
+                if st.button("Details", key=f"dash_t_detail_{idx}"):
+                    goto("Termin Detail", id=termin_id)
 
 
-def render_suche() -> None:
-    st.title("Suche")
-    q = route_param("q", "")
-    current = st.text_input("Suchbegriff", value=q)
-    if current:
-        st.caption("Suchbegriff: " + current)
-    st.write("Suche ueber Termine, Antraege, Personen, Inventar und Infos.")
+def build_search_rows(query: str) -> list[dict[str, str]]:
+    q = query.lower()
+    rows: list[dict[str, str]] = []
+
+    termine = get_item(STORAGE_KEYS["TERMINE"], [])
+    for t in termine[:50]:
+        text = f"{t.get('titel', '')} {t.get('ressource', '')} {t.get('datum', '')}".lower()
+        if q in text:
+            rows.append(
+                {
+                    "label": t.get("titel", "Termin"),
+                    "meta": t.get("datum", ""),
+                    "route": "Termin Detail",
+                    "id": str(t.get("id", "")),
+                }
+            )
+
+    antraege = [*get_item(STORAGE_KEYS["ANTRAEGE"], []), *MOCK_ANTRAEGE]
+    for a in antraege[:100]:
+        text = f"{a.get('titel', '')} {a.get('kategorie', '')} {a.get('status', '')}".lower()
+        if q in text:
+            rows.append(
+                {
+                    "label": a.get("titel", "Antrag"),
+                    "meta": a.get("kategorie", ""),
+                    "route": "Antrag Detail",
+                    "id": str(a.get("id", "")),
+                }
+            )
+
+    for m in MITGLIEDER:
+        text = f"{m['name']} {m['email']} {m['bereich']}".lower()
+        if q in text:
+            rows.append({"label": m["name"], "meta": m["bereich"], "route": "Mitglieder", "id": ""})
+
+    verant = get_item(STORAGE_KEYS["VERANTWORTLICHE"], [])
+    for v in verant[:100]:
+        text = f"{v.get('thema', '')} {v.get('name', '')} {v.get('email', '')}".lower()
+        if q in text:
+            rows.append({"label": v.get("name", "Verantwortlich"), "meta": v.get("thema", ""), "route": "Verantwortliche", "id": ""})
+
+    for i in INFOS_ANSPRECHPARTNER:
+        text = f"{i['kategorie']} {i['name']} {i['email']}".lower()
+        if q in text:
+            rows.append({"label": i["name"], "meta": i["kategorie"], "route": "Infos", "id": ""})
+
+    return rows[:12]
+
+
+def render_global_search() -> None:
+    current_query = st.session_state.get("global_search_query", "")
+    left, center, right = st.columns([1, 2, 1])
+    with center:
+        with st.form("global_search_form"):
+            q = st.text_input(
+                "Suche in der App",
+                value=current_query,
+                placeholder="Termine, Antraege, Mitglieder, Infos ...",
+                label_visibility="collapsed",
+            )
+            submitted = st.form_submit_button("Suchen")
+            if submitted:
+                st.session_state["global_search_query"] = q.strip()
+                st.rerun()
+
+    query = st.session_state.get("global_search_query", "").strip()
+    if not query:
+        return
+
+    results = build_search_rows(query)
+    with st.container(border=True):
+        st.markdown(f"**Suchergebnisse fuer:** `{query}`")
+        if not results:
+            st.caption("Keine Treffer.")
+            return
+        for idx, r in enumerate(results):
+            c1, c2 = st.columns([6, 1])
+            with c1:
+                st.write(f"{r['label']}  •  {r['meta']}")
+            with c2:
+                if st.button("Oeffnen", key=f"search_open_{idx}_{r['route']}"):
+                    if r["id"]:
+                        goto(r["route"], id=r["id"])
+                    else:
+                        goto(r["route"])
+
+
+def _user_initials(name: str) -> str:
+    parts = [p for p in name.strip().split(" ") if p]
+    if not parts:
+        return "U"
+    if len(parts) == 1:
+        return parts[0][:1].upper()
+    return (parts[0][:1] + parts[-1][:1]).upper()
+
+
+def render_profile_menu() -> None:
+    user = get_current_user()
+    initials = _user_initials(user.get("displayName", "User"))
+
+    st.markdown(
+        """
+<style>
+    [data-testid="stPopover"] > div > button {
+        border-radius: 9999px !important;
+        width: 44px;
+        height: 44px;
+        padding: 0 !important;
+        font-weight: 700 !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+    }
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _, right = st.columns([20, 1])
+    with right:
+        with st.popover(initials):
+            st.write("**" + user.get("displayName", "User") + "**")
+            st.caption(user.get("email", ""))
+            if st.button("Profil", key="menu_profil", use_container_width=True):
+                goto("Profil")
+            if st.button("Einstellungen", key="menu_settings", use_container_width=True):
+                goto("Einstellungen")
+            if st.button("Abmelden", key="menu_logout", use_container_width=True):
+                goto("Abmelden")
 
 
 def render_termine() -> None:
@@ -828,7 +1033,7 @@ def render_sidebar() -> None:
         st.session_state["route_params"] = {}
 
     current = st.session_state["route"]
-    if current not in ROUTES:
+    if current not in ROUTE_RENDERERS:
         current = "Dashboard"
         st.session_state["route"] = current
 
@@ -836,16 +1041,25 @@ def render_sidebar() -> None:
         st.header("Ticket-Vbeide")
         user = get_current_user()
         st.caption(user.get("displayName", "User"))
-        selected = st.radio("Navigation", ROUTES, index=ROUTES.index(current))
-        if selected != current:
-            st.session_state["route"] = selected
-            st.session_state["route_params"] = {}
-            st.rerun()
+        st.markdown("### Navigation")
+        for route in ROUTES:
+            is_current = route == current
+            icon = NAV_ICONS.get(route, "•")
+            label = f"{icon}  {route}"
+            if st.button(
+                label,
+                key=f"nav_{route.replace(' ', '_')}",
+                use_container_width=True,
+                type="primary" if is_current else "secondary",
+            ):
+                if not is_current:
+                    st.session_state["route"] = route
+                    st.session_state["route_params"] = {}
+                    st.rerun()
 
 
 ROUTE_RENDERERS = {
     "Dashboard": render_dashboard,
-    "Suche": render_suche,
     "Termine": render_termine,
     "Termin Detail": render_termin_detail,
     "Personalakten": render_personal,
@@ -875,6 +1089,9 @@ ROUTE_RENDERERS = {
     "Abmelden": render_abmelden,
 }
 
+inject_vmoritz_theme()
 render_sidebar()
+render_profile_menu()
+render_global_search()
 ROUTE_RENDERERS[st.session_state["route"]]()
 
