@@ -10,7 +10,9 @@ def setup_page(title: str) -> None:
     with st.sidebar:
         st.header("Ticket-Vbeide")
         st.caption("Reine Streamlit-Version")
-        st.page_link("streamlit_app.py", label="Dashboard")
+        # On some Streamlit Cloud setups, linking the main script via st.page_link
+        # raises a KeyError. A plain root link is stable across environments.
+        st.markdown("[Dashboard](/)")
         st.page_link("pages/01_Termine.py", label="Termine")
         st.page_link("pages/02_Kalender.py", label="Kalender")
         st.page_link("pages/03_Helferstunden.py", label="Helferstunden")
