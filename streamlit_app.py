@@ -64,18 +64,21 @@ def inject_vmoritz_theme() -> None:
         """
 <style>
     :root {
-        --vm-bg: #f8fafc;
-        --vm-fg: #0f172a;
+        --vm-bg: #0b1220;
+        --vm-fg: #e2e8f0;
         --vm-primary: #0ea5e9;
-        --vm-muted: #64748b;
-        --vm-border: #cbd5e1;
-        --vm-card: #ffffff;
-        --vm-sidebar: #0f172a;
-        --vm-sidebar-fg: #e2e8f0;
+        --vm-muted: #94a3b8;
+        --vm-border: #334155;
+        --vm-card: #111b2e;
+        --vm-sidebar: #020617;
+        --vm-sidebar-fg: #cbd5e1;
     }
     .stApp {
         background: var(--vm-bg);
         color: var(--vm-fg);
+    }
+    .block-container {
+        background: transparent;
     }
     [data-testid="stSidebar"] {
         background: var(--vm-sidebar);
@@ -103,11 +106,34 @@ def inject_vmoritz_theme() -> None:
     }
     [data-testid="stButton"] > button {
         border-radius: 10px;
+        border: 1px solid var(--vm-border);
     }
     div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 1px solid var(--vm-border);
         border-radius: 12px;
         background: var(--vm-card);
+    }
+    [data-testid="stForm"], [data-testid="stExpander"], [data-testid="stPopover"] > div {
+        background: var(--vm-card);
+        border: 1px solid var(--vm-border);
+        border-radius: 12px;
+    }
+    [data-baseweb="input"] > div,
+    [data-baseweb="select"] > div,
+    textarea,
+    input {
+        background: #0f172a !important;
+        color: var(--vm-fg) !important;
+        border-color: var(--vm-border) !important;
+    }
+    [data-testid="stDataFrame"], table {
+        background: var(--vm-card) !important;
+        color: var(--vm-fg) !important;
+    }
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li,
+    [data-testid="stCaptionContainer"] {
+        color: var(--vm-fg);
     }
     .vm-section-title {
         margin-top: 0.2rem;
@@ -129,7 +155,6 @@ ROUTES = [
     "Helferstunden",
     "Wachbuch",
     "Antraege",
-    "Schaden melden",
     "Dienstkleidung",
     "Aufgaben",
     "Pinnwand",
